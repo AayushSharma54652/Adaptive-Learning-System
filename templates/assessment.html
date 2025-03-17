@@ -1,0 +1,215 @@
+{% extends 'base.html' %}
+
+{% block title %}Assessment - Adaptive Learning{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/assessment.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="assessment-container">
+    <div class="assessment-header">
+        <div class="assessment-navigation">
+            <a href="{{ url_for('learning_content', content_id=content_id) }}" class="btn btn-outline">Back to Content</a>
+        </div>
+        
+        <div class="assessment-title">
+            <h2>Assessment</h2>
+            <p>Test your understanding of the content you've just learned.</p>
+        </div>
+    </div>
+    
+    <div class="assessment-body">
+        <div class="assessment-instructions">
+            <p>Answer all questions to complete this assessment. Your performance will help us adapt your learning path.</p>
+        </div>
+        
+        <div class="assessment-questions" id="questions-container">
+            {% for question in assessment.questions %}
+            <div class="question-card" id="question-{{ question.id }}" data-question-id="{{ question.id }}" data-kc-id="{{ question.knowledge_component_id }}">
+                <div class="question-number">Question {{ loop.index }} of {{ assessment.questions|length }}</div>
+                <div class="question-text">{{ question.text }}</div>
+                
+                <div class="question-options">
+                    {% if question.type == 'multiple_choice' %}
+                        {% for option in question.options %}
+                        <div class="option">
+                            <input type="radio" name="question-{{ question.id }}" id="option-{{ question.id }}-{{ loop.index }}" value="{{ option }}">
+                            <label for="option-{{ question.id }}-{{ loop.index }}">{{ option }}</label>
+                        </div>
+                        {% endfor %}
+                    {% elif question.type == 'text' %}
+                        <textarea class="text-answer" placeholder="Enter your answer here..."></textarea>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        
+        <div class="assessment-actions">
+            <button id="submit-assessment" class="btn btn-primary">Submit Assessment</button>
+        </div>
+    </div>
+    
+    <div class="assessment-results hidden" id="results-container">
+        <div class="results-header">
+            <h3>Assessment Results</h3>
+        </div>
+        
+        <div class="results-summary" id="results-summary">
+            <!-- Will be populated by JavaScript -->
+        </div>
+        
+        <div class="results-feedback" id="results-feedback">
+            <!-- Will be populated by JavaScript -->
+        </div>
+        
+        <div class="results-questions" id="results-questions">
+            <!-- Will be populated by JavaScript -->
+        </div>
+        
+        <div class="results-actions">
+            <a id="next-content-link" href="#" class="btn btn-primary">Continue to Next Content</a>
+            <a href="{{ url_for('dashboard') }}" class="btn btn-outline">Return to Dashboard</a>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const questionsContainer = document.getElementById('questions-container');
+        const resultsContainer = document.getElementById('results-container');
+        const submitButton = document.getElementById('submit-assessment');
+        const resultsSummary = document.getElementById('results-summary');
+        const resultsFeedback = document.getElementById('results-feedback');
+        const resultsQuestions = document.getElementById('results-questions');
+        const nextContentLink = document.getElementById('next-content-link');
+        
+        // Track question start times for response time calculation
+        const questionStartTimes = {};
+        
+        // Initialize start times for all questions
+        document.querySelectorAll('.question-card').forEach(question => {
+            const questionId = question.dataset.questionId;
+            questionStartTimes[questionId] = Date.now();
+        });
+        
+        // Submit assessment
+        submitButton.addEventListener('click', function() {
+            // Collect responses
+            const responses = [];
+            document.querySelectorAll('.question-card').forEach(question => {
+                const questionId = parseInt(question.dataset.questionId);
+                const responseTime = (Date.now() - questionStartTimes[questionId]) / 1000; // in seconds
+                
+                let userAnswer = '';
+                
+                // Get answer based on question type
+                if (question.querySelector('.option input[type="radio"]')) {
+                    // Multiple choice
+                    const selectedOption = question.querySelector('.option input[type="radio"]:checked');
+                    if (selectedOption) {
+                        userAnswer = selectedOption.value;
+                    }
+                } else if (question.querySelector('.text-answer')) {
+                    // Text answer
+                    userAnswer = question.querySelector('.text-answer').value;
+                }
+                
+                responses.push({
+                    question_id: questionId,
+                    answer: userAnswer,
+                    response_time: responseTime
+                });
+            });
+            
+            // Check if all questions are answered
+            const unansweredQuestions = responses.filter(r => r.answer === '');
+            if (unansweredQuestions.length > 0) {
+                alert(`Please answer all questions. You have ${unansweredQuestions.length} unanswered questions.`);
+                return;
+            }
+            
+            // Submit responses to server
+            fetch('{{ url_for("submit_assessment") }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    content_id: {{ content_id }},
+                    responses: responses
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                // Display results
+                displayResults(data);
+                
+                // Set next content link
+                if (data.next_content) {
+                    nextContentLink.href = `/learning/${data.next_content.content_id}`;
+                } else {
+                    nextContentLink.textContent = 'Return to Dashboard';
+                    nextContentLink.href = '{{ url_for("dashboard") }}';
+                }
+                
+                // Hide questions, show results
+                questionsContainer.classList.add('hidden');
+                document.querySelector('.assessment-actions').classList.add('hidden');
+                resultsContainer.classList.remove('hidden');
+            })
+            .catch(error => {
+                console.error('Error submitting assessment:', error);
+                alert('An error occurred while submitting your assessment. Please try again.');
+            });
+        });
+        
+        // Display assessment results
+        function displayResults(data) {
+            // Display summary
+            const correctCount = data.results.questions.filter(q => q.is_correct).length;
+            const totalCount = data.results.questions.length;
+            const scorePercentage = Math.round(data.results.total_score * 100);
+            
+            let summaryHTML = `
+                <div class="score-circle ${scorePercentage >= 80 ? 'high-score' : scorePercentage >= 60 ? 'medium-score' : 'low-score'}">
+                    <span class="score-value">${scorePercentage}%</span>
+                </div>
+                <div class="score-text">
+                    <p>You answered ${correctCount} out of ${totalCount} questions correctly.</p>
+                    ${data.results.mastery_achieved 
+                        ? '<p class="mastery-achieved">Congratulations! You\'ve achieved mastery of this content.</p>' 
+                        : '<p>Continue practicing to achieve mastery.</p>'}
+                </div>
+            `;
+            resultsSummary.innerHTML = summaryHTML;
+            
+            // Display feedback
+            resultsFeedback.innerHTML = `<p>${data.results.feedback.replace(/\n/g, '<br>')}</p>`;
+            
+            // Display question results
+            let questionsHTML = '<h4>Question Results</h4>';
+            
+            data.results.questions.forEach((question, index) => {
+                questionsHTML += `
+                    <div class="result-question ${question.is_correct ? 'correct' : 'incorrect'}">
+                        <div class="result-question-header">
+                            <span class="question-number">Question ${index + 1}</span>
+                            <span class="result-indicator">${question.is_correct ? 'Correct' : 'Incorrect'}</span>
+                        </div>
+                        <div class="result-question-details">
+                            <p class="correct-answer"><strong>Correct answer:</strong> ${question.correct_answer}</p>
+                            ${question.explanation ? `<p class="explanation"><strong>Explanation:</strong> ${question.explanation}</p>` : ''}
+                        </div>
+                    </div>
+                `;
+            });
+            
+            resultsQuestions.innerHTML = questionsHTML;
+        }
+    });
+</script>
+{% endblock %}

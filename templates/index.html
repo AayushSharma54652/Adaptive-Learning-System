@@ -1,0 +1,108 @@
+{% extends 'base.html' %}
+
+{% block title %}Welcome to Adaptive Learning{% endblock %}
+
+{% block content %}
+<div class="welcome-section">
+    <div class="welcome-text">
+        <h2>Welcome to Adaptive Learning</h2>
+        <p>A personalized learning experience that adapts to your needs and learning style.</p>
+        <ul class="features">
+            <li>Personalized learning paths based on your progress</li>
+            <li>Real-time feedback and adjustments</li>
+            <li>Content tailored to your learning style</li>
+            <li>Track your progress and knowledge growth</li>
+        </ul>
+    </div>
+    
+    <div class="auth-container">
+        <div class="tabs">
+            <button class="tab-btn active" id="login-tab">Login</button>
+            <button class="tab-btn" id="register-tab">Register</button>
+        </div>
+        
+        <div class="tab-content" id="login-content">
+            <form action="{{ url_for('login') }}" method="POST">
+                <h3>Login to Your Account</h3>
+                
+                {% if login_error %}
+                <div class="error-message">
+                    {{ login_error }}
+                </div>
+                {% endif %}
+                
+                <div class="form-group">
+                    <label for="login-username">Username</label>
+                    <input type="text" id="login-username" name="username" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="login-password">Password</label>
+                    <input type="password" id="login-password" name="password" required>
+                </div>
+                
+                <button type="submit" class="btn btn-primary">Login</button>
+            </form>
+        </div>
+        
+        <div class="tab-content hidden" id="register-content">
+            <form action="{{ url_for('register') }}" method="POST">
+                <h3>Create New Account</h3>
+                
+                {% if registration_error %}
+                <div class="error-message">
+                    {{ registration_error }}
+                </div>
+                {% endif %}
+                
+                <div class="form-group">
+                    <label for="register-username">Username</label>
+                    <input type="text" id="register-username" name="username" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="register-email">Email</label>
+                    <input type="email" id="register-email" name="email" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="register-password">Password</label>
+                    <input type="password" id="register-password" name="password" required>
+                </div>
+                
+                <button type="submit" class="btn btn-primary">Register</button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const loginTab = document.getElementById('login-tab');
+        const registerTab = document.getElementById('register-tab');
+        const loginContent = document.getElementById('login-content');
+        const registerContent = document.getElementById('register-content');
+        
+        loginTab.addEventListener('click', function() {
+            loginTab.classList.add('active');
+            registerTab.classList.remove('active');
+            loginContent.classList.remove('hidden');
+            registerContent.classList.add('hidden');
+        });
+        
+        registerTab.addEventListener('click', function() {
+            registerTab.classList.add('active');
+            loginTab.classList.remove('active');
+            registerContent.classList.remove('hidden');
+            loginContent.classList.add('hidden');
+        });
+        
+        // Show registration tab if there's a registration error
+        {% if registration_error %}
+        registerTab.click();
+        {% endif %}
+    });
+</script>
+{% endblock %}

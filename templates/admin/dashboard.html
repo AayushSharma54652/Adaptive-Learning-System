@@ -1,0 +1,475 @@
+{% extends 'base.html' %}
+
+{% block title %}Admin Dashboard - Adaptive Learning{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="admin-container">
+    <div class="admin-header">
+        <h2>Administrator Dashboard</h2>
+        <p>Manage content and monitor learning progress</p>
+    </div>
+    
+    <div class="admin-content">
+        <div class="admin-sidebar">
+            <div class="admin-nav">
+                <a href="#overview" class="admin-nav-item active" data-target="admin-overview">Overview</a>
+                <a href="#users" class="admin-nav-item" data-target="admin-users">Users</a>
+                <a href="#content" class="admin-nav-item" data-target="admin-content">Content</a>
+                <a href="#assessments" class="admin-nav-item" data-target="admin-assessments">Assessments</a>
+                <a href="#analytics" class="admin-nav-item" data-target="admin-analytics">Analytics</a>
+                <a href="#settings" class="admin-nav-item" data-target="admin-settings">Settings</a>
+            </div>
+        </div>
+        
+        <div class="admin-main">
+            <!-- Overview Section -->
+            <div id="admin-overview" class="admin-section active">
+                <h3>System Overview</h3>
+                
+                <div class="overview-cards">
+                    <div class="overview-card">
+                        <div class="card-icon users-icon"></div>
+                        <div class="card-content">
+                            <h4>Total Users</h4>
+                            <div class="card-value">{{ stats.total_users }}</div>
+                            <div class="card-change positive">+{{ stats.new_users }} this week</div>
+                        </div>
+                    </div>
+                    
+                    <div class="overview-card">
+                        <div class="card-icon content-icon"></div>
+                        <div class="card-content">
+                            <h4>Content Items</h4>
+                            <div class="card-value">{{ stats.total_content }}</div>
+                            <div class="card-change neutral">{{ stats.new_content }} added this month</div>
+                        </div>
+                    </div>
+                    
+                    <div class="overview-card">
+                        <div class="card-icon activity-icon"></div>
+                        <div class="card-content">
+                            <h4>Daily Activity</h4>
+                            <div class="card-value">{{ stats.daily_sessions }}</div>
+                            <div class="card-change positive">+{{ stats.activity_change }}%</div>
+                        </div>
+                    </div>
+                    
+                    <div class="overview-card">
+                        <div class="card-icon completion-icon"></div>
+                        <div class="card-content">
+                            <h4>Completion Rate</h4>
+                            <div class="card-value">{{ stats.completion_rate }}%</div>
+                            <div class="card-change {{ 'positive' if stats.completion_change >= 0 else 'negative' }}">
+                                {{ '+' if stats.completion_change >= 0 else '' }}{{ stats.completion_change }}%
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="overview-charts">
+                    <div class="chart-container">
+                        <h4>User Activity (Last 30 Days)</h4>
+                        <canvas id="activity-chart"></canvas>
+                    </div>
+                    
+                    <div class="chart-container">
+                        <h4>Learning Path Progress</h4>
+                        <canvas id="paths-chart"></canvas>
+                    </div>
+                </div>
+                
+                <div class="recent-activity">
+                    <h4>Recent Activity</h4>
+                    <div class="activity-list">
+                        {% for activity in recent_activity %}
+                        <div class="activity-item">
+                            <div class="activity-time">{{ activity.timestamp }}</div>
+                            <div class="activity-user">{{ activity.username }}</div>
+                            <div class="activity-description">{{ activity.description }}</div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Users Section -->
+            <div id="admin-users" class="admin-section">
+                <div class="section-header">
+                    <h3>User Management</h3>
+                    <div class="section-actions">
+                        <input type="text" id="user-search" placeholder="Search users...">
+                        <button id="add-user-btn" class="btn btn-primary">Add User</button>
+                    </div>
+                </div>
+                
+                <div class="users-table-container">
+                    <table class="data-table users-table">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Username</th>
+                                <th>Email</th>
+                                <th>Registration Date</th>
+                                <th>Last Active</th>
+                                <th>Progress</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for user in users %}
+                            <tr>
+                                <td>{{ user.id }}</td>
+                                <td>{{ user.username }}</td>
+                                <td>{{ user.email }}</td>
+                                <td>{{ user.created_at }}</td>
+                                <td>{{ user.last_active }}</td>
+                                <td>
+                                    <div class="progress-bar">
+                                        <div class="progress-value" style="width: {{ user.progress }}%;"></div>
+                                    </div>
+                                </td>
+                                <td class="action-buttons">
+                                    <button class="btn-icon view-user" data-id="{{ user.id }}">👁️</button>
+                                    <button class="btn-icon edit-user" data-id="{{ user.id }}">✏️</button>
+                                    <button class="btn-icon delete-user" data-id="{{ user.id }}">🗑️</button>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div class="pagination">
+                    <button class="pagination-prev" {% if page == 1 %}disabled{% endif %}>Previous</button>
+                    <span class="pagination-info">Page {{ page }} of {{ total_pages }}</span>
+                    <button class="pagination-next" {% if page == total_pages %}disabled{% endif %}>Next</button>
+                </div>
+            </div>
+            
+            <!-- Content Section -->
+            <div id="admin-content" class="admin-section">
+                <div class="section-header">
+                    <h3>Content Management</h3>
+                    <div class="section-actions">
+                        <input type="text" id="content-search" placeholder="Search content...">
+                        <button id="add-content-btn" class="btn btn-primary">Add Content</button>
+                    </div>
+                </div>
+                
+                <div class="content-filters">
+                    <div class="filter-group">
+                        <label>Type:</label>
+                        <select id="content-type-filter">
+                            <option value="">All</option>
+                            <option value="lesson">Lessons</option>
+                            <option value="exercise">Exercises</option>
+                            <option value="video">Videos</option>
+                            <option value="interactive">Interactive</option>
+                        </select>
+                    </div>
+                    
+                    <div class="filter-group">
+                        <label>Difficulty:</label>
+                        <select id="difficulty-filter">
+                            <option value="">All</option>
+                            <option value="1">1 - Beginner</option>
+                            <option value="2">2 - Easy</option>
+                            <option value="3">3 - Intermediate</option>
+                            <option value="4">4 - Advanced</option>
+                            <option value="5">5 - Expert</option>
+                        </select>
+                    </div>
+                    
+                    <div class="filter-group">
+                        <label>Knowledge Area:</label>
+                        <select id="knowledge-filter">
+                            <option value="">All</option>
+                            {% for kc in knowledge_components %}
+                            <option value="{{ kc.id }}">{{ kc.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <button id="apply-filters" class="btn btn-outline">Apply Filters</button>
+                    <button id="reset-filters" class="btn btn-outline">Reset</button>
+                </div>
+                
+                <div class="content-table-container">
+                    <table class="data-table content-table">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Title</th>
+                                <th>Type</th>
+                                <th>Difficulty</th>
+                                <th>Knowledge Components</th>
+                                <th>Usage</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for content in contents %}
+                            <tr>
+                                <td>{{ content.id }}</td>
+                                <td>{{ content.title }}</td>
+                                <td>{{ content.content_type }}</td>
+                                <td>{{ content.difficulty }}</td>
+                                <td>{{ content.knowledge_components }}</td>
+                                <td>{{ content.views }} views</td>
+                                <td class="action-buttons">
+                                    <button class="btn-icon view-content" data-id="{{ content.id }}">👁️</button>
+                                    <button class="btn-icon edit-content" data-id="{{ content.id }}">✏️</button>
+                                    <button class="btn-icon delete-content" data-id="{{ content.id }}">🗑️</button>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div class="pagination">
+                    <button class="pagination-prev" {% if content_page == 1 %}disabled{% endif %}>Previous</button>
+                    <span class="pagination-info">Page {{ content_page }} of {{ content_total_pages }}</span>
+                    <button class="pagination-next" {% if content_page == content_total_pages %}disabled{% endif %}>Next</button>
+                </div>
+            </div>
+            
+            <!-- Assessments Section -->
+            <div id="admin-assessments" class="admin-section">
+                <div class="section-header">
+                    <h3>Assessment Management</h3>
+                    <div class="section-actions">
+                        <input type="text" id="assessment-search" placeholder="Search assessments...">
+                        <button id="add-assessment-btn" class="btn btn-primary">Add Assessment</button>
+                    </div>
+                </div>
+                
+                <div class="assessment-table-container">
+                    <table class="data-table assessment-table">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Question</th>
+                                <th>Type</th>
+                                <th>Difficulty</th>
+                                <th>Knowledge Component</th>
+                                <th>Success Rate</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in assessment_items %}
+                            <tr>
+                                <td>{{ item.id }}</td>
+                                <td class="question-cell">{{ item.question_text }}</td>
+                                <td>{{ item.question_type }}</td>
+                                <td>{{ item.difficulty }}</td>
+                                <td>{{ item.knowledge_component }}</td>
+                                <td>
+                                    <div class="progress-bar">
+                                        <div class="progress-value" style="width: {{ item.success_rate }}%;"></div>
+                                    </div>
+                                    <div class="progress-text">{{ item.success_rate }}%</div>
+                                </td>
+                                <td class="action-buttons">
+                                    <button class="btn-icon view-assessment" data-id="{{ item.id }}">👁️</button>
+                                    <button class="btn-icon edit-assessment" data-id="{{ item.id }}">✏️</button>
+                                    <button class="btn-icon delete-assessment" data-id="{{ item.id }}">🗑️</button>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div class="pagination">
+                    <button class="pagination-prev" {% if assessment_page == 1 %}disabled{% endif %}>Previous</button>
+                    <span class="pagination-info">Page {{ assessment_page }} of {{ assessment_total_pages }}</span>
+                    <button class="pagination-next" {% if assessment_page == assessment_total_pages %}disabled{% endif %}>Next</button>
+                </div>
+            </div>
+            
+            <!-- Analytics Section -->
+            <div id="admin-analytics" class="admin-section">
+                <h3>Learning Analytics</h3>
+                
+                <div class="analytics-filters">
+                    <div class="filter-group">
+                        <label>Date Range:</label>
+                        <select id="date-range">
+                            <option value="7">Last 7 days</option>
+                            <option value="30" selected>Last 30 days</option>
+                            <option value="90">Last 90 days</option>
+                            <option value="all">All time</option>
+                        </select>
+                    </div>
+                    
+                    <div class="filter-group">
+                        <label>Group By:</label>
+                        <select id="group-by">
+                            <option value="day">Day</option>
+                            <option value="week">Week</option>
+                            <option value="month">Month</option>
+                        </select>
+                    </div>
+                    
+                    <button id="update-analytics" class="btn btn-outline">Update</button>
+                </div>
+                
+                <div class="analytics-dashboard">
+                    <div class="analytics-card">
+                        <h4>User Engagement</h4>
+                        <div class="chart-container">
+                            <canvas id="engagement-chart"></canvas>
+                        </div>
+                    </div>
+                    
+                    <div class="analytics-card">
+                        <h4>Knowledge Component Mastery</h4>
+                        <div class="chart-container">
+                            <canvas id="mastery-chart"></canvas>
+                        </div>
+                    </div>
+                    
+                    <div class="analytics-card">
+                        <h4>Assessment Performance</h4>
+                        <div class="chart-container">
+                            <canvas id="assessment-chart"></canvas>
+                        </div>
+                    </div>
+                    
+                    <div class="analytics-card">
+                        <h4>Content Effectiveness</h4>
+                        <div class="chart-container">
+                            <canvas id="effectiveness-chart"></canvas>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="analytics-insights">
+                    <h4>System Insights</h4>
+                    <div class="insights-container">
+                        {% for insight in insights %}
+                        <div class="insight-card">
+                            <div class="insight-icon {{ insight.type }}-icon"></div>
+                            <div class="insight-content">
+                                <h5>{{ insight.title }}</h5>
+                                <p>{{ insight.description }}</p>
+                                <div class="insight-metrics">{{ insight.metrics }}</div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Settings Section -->
+            <div id="admin-settings" class="admin-section">
+                <h3>System Settings</h3>
+                
+                <div class="settings-card">
+                    <h4>Knowledge Components</h4>
+                    <p>Manage the knowledge components (concepts/skills) in the system.</p>
+                    
+                    <div class="card-actions">
+                        <button id="manage-kc-btn" class="btn btn-outline">Manage Knowledge Components</button>
+                    </div>
+                </div>
+                
+                <div class="settings-card">
+                    <h4>Learning Paths</h4>
+                    <p>Configure pre-defined learning paths for different topics.</p>
+                    
+                    <div class="card-actions">
+                        <button id="manage-paths-btn" class="btn btn-outline">Manage Learning Paths</button>
+                    </div>
+                </div>
+                
+                <div class="settings-card">
+                    <h4>System Parameters</h4>
+                    <p>Configure the adaptive learning parameters used by the system.</p>
+                    
+                    <form id="system-params-form" class="settings-form">
+                        <div class="form-group">
+                            <label for="learning-rate">Learning Rate</label>
+                            <input type="range" id="learning-rate" name="learning_rate" min="0.01" max="0.5" step="0.01" value="{{ system_settings.learning_rate }}">
+                            <div class="range-value"><span id="learning-rate-value">{{ system_settings.learning_rate }}</span></div>
+                            <p class="setting-description">Controls how quickly the system updates a user's knowledge state based on assessment results.</p>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="recommendation-diversity">Recommendation Diversity</label>
+                            <input type="range" id="recommendation-diversity" name="recommendation_diversity" min="0" max="1" step="0.1" value="{{ system_settings.recommendation_diversity }}">
+                            <div class="range-value"><span id="recommendation-diversity-value">{{ system_settings.recommendation_diversity }}</span></div>
+                            <p class="setting-description">Controls the balance between focused and diverse content recommendations.</p>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="mastery-threshold">Mastery Threshold</label>
+                            <input type="range" id="mastery-threshold" name="mastery_threshold" min="0.6" max="0.95" step="0.05" value="{{ system_settings.mastery_threshold }}">
+                            <div class="range-value"><span id="mastery-threshold-value">{{ system_settings.mastery_threshold }}</span></div>
+                            <p class="setting-description">The knowledge level at which a component is considered mastered.</p>
+                        </div>
+                        
+                        <div class="form-actions">
+                            <button type="submit" class="btn btn-primary">Save Settings</button>
+                            <button type="button" id="reset-settings" class="btn btn-outline">Reset to Defaults</button>
+                        </div>
+                    </form>
+                </div>
+                
+                <div class="settings-card">
+                    <h4>System Maintenance</h4>
+                    <p>Perform system maintenance tasks.</p>
+                    
+                    <div class="maintenance-actions">
+                        <button id="rebuild-indexes-btn" class="btn btn-outline">Rebuild Indexes</button>
+                        <button id="clear-cache-btn" class="btn btn-outline">Clear Cache</button>
+                        <button id="backup-system-btn" class="btn btn-primary">Backup System</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modals -->
+<div id="user-modal" class="modal">
+    <div class="modal-content">
+        <span class="close-modal">&times;</span>
+        <h3 id="user-modal-title">User Details</h3>
+        <div id="user-modal-content">
+            <!-- Will be populated dynamically -->
+        </div>
+    </div>
+</div>
+
+<div id="content-modal" class="modal">
+    <div class="modal-content">
+        <span class="close-modal">&times;</span>
+        <h3 id="content-modal-title">Content Details</h3>
+        <div id="content-modal-content">
+            <!-- Will be populated dynamically -->
+        </div>
+    </div>
+</div>
+
+<div id="assessment-modal" class="modal">
+    <div class="modal-content">
+        <span class="close-modal">&times;</span>
+        <h3 id="assessment-modal-title">Assessment Details</h3>
+        <div id="assessment-modal-content">
+            <!-- Will be populated dynamically -->
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="{{ url_for('static', filename='js/admin.js') }}"></script>
+{% endblock %}

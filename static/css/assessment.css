@@ -1,0 +1,270 @@
+/* Assessment Styles */
+
+.assessment-container {
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.assessment-header {
+    margin-bottom: 20px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.assessment-navigation {
+    margin-bottom: 10px;
+}
+
+.assessment-title h2 {
+    font-size: 1.8rem;
+    color: var(--primary-color);
+    margin-bottom: 5px;
+}
+
+.assessment-title p {
+    color: var(--light-text);
+}
+
+.assessment-body {
+    background-color: var(--card-bg);
+    border-radius: 8px;
+    box-shadow: var(--shadow);
+    padding: 20px;
+    margin-bottom: 20px;
+}
+
+.assessment-instructions {
+    margin-bottom: 20px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.assessment-questions {
+    margin-bottom: 20px;
+}
+
+.question-card {
+    background-color: #f9f9f9;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 20px;
+    animation: fadeIn 0.5s ease;
+    border: 1px solid var(--border-color);
+}
+
+.question-number {
+    font-size: 0.9rem;
+    color: var(--light-text);
+    margin-bottom: 10px;
+}
+
+.question-text {
+    font-size: 1.1rem;
+    font-weight: 500;
+    margin-bottom: 15px;
+}
+
+.question-options {
+    margin-top: 15px;
+}
+
+.option {
+    display: flex;
+    align-items: center;
+    padding: 10px;
+    border-radius: 6px;
+    transition: background-color 0.2s ease;
+    margin-bottom: 8px;
+}
+
+.option:hover {
+    background-color: rgba(52, 152, 219, 0.05);
+}
+
+.option input[type="radio"] {
+    margin-right: 10px;
+}
+
+.option label {
+    cursor: pointer;
+    flex: 1;
+}
+
+.text-answer {
+    width: 100%;
+    min-height: 100px;
+    padding: 10px;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    font-family: inherit;
+    resize: vertical;
+}
+
+.text-answer:focus {
+    outline: none;
+    border-color: var(--primary-color);
+}
+
+.assessment-actions {
+    display: flex;
+    justify-content: center;
+    margin-top: 30px;
+}
+
+/* Results Styles */
+.assessment-results {
+    background-color: var(--card-bg);
+    border-radius: 8px;
+    box-shadow: var(--shadow);
+    padding: 20px;
+    animation: fadeIn 0.5s ease;
+}
+
+.results-header {
+    margin-bottom: 20px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--border-color);
+    text-align: center;
+}
+
+.results-header h3 {
+    font-size: 1.5rem;
+    color: var(--primary-color);
+}
+
+.results-summary {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 30px;
+    flex-wrap: wrap;
+    gap: 20px;
+}
+
+.score-circle {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 20px;
+    font-weight: bold;
+    color: white;
+    font-size: 1.5rem;
+}
+
+.high-score {
+    background-color: var(--secondary-color);
+}
+
+.medium-score {
+    background-color: #f39c12;
+}
+
+.low-score {
+    background-color: var(--warn-color);
+}
+
+.score-text {
+    flex: 1;
+    min-width: 200px;
+}
+
+.mastery-achieved {
+    color: var(--secondary-color);
+    font-weight: bold;
+    margin-top: 10px;
+}
+
+.results-feedback {
+    background-color: #f9f9f9;
+    border-radius: 6px;
+    padding: 15px;
+    margin-bottom: 30px;
+    border-left: 3px solid var(--primary-color);
+}
+
+.results-questions h4 {
+    margin-bottom: 15px;
+    font-size: 1.1rem;
+}
+
+.result-question {
+    background-color: #f9f9f9;
+    border-radius: 6px;
+    padding: 15px;
+    margin-bottom: 15px;
+    border-left: 3px solid #ccc;
+}
+
+.result-question.correct {
+    border-left-color: var(--secondary-color);
+}
+
+.result-question.incorrect {
+    border-left-color: var(--warn-color);
+}
+
+.result-question-header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 10px;
+}
+
+.result-indicator {
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    font-weight: 500;
+}
+
+.correct .result-indicator {
+    background-color: rgba(46, 204, 113, 0.1);
+    color: var(--secondary-color);
+}
+
+.incorrect .result-indicator {
+    background-color: rgba(231, 76, 60, 0.1);
+    color: var(--warn-color);
+}
+
+.result-question-details {
+    padding-top: 10px;
+    border-top: 1px solid var(--border-color);
+}
+
+.correct-answer, .explanation {
+    margin-bottom: 8px;
+}
+
+.results-actions {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    margin-top: 30px;
+    padding-top: 20px;
+    border-top: 1px solid var(--border-color);
+}
+
+/* Responsive Design */
+@media (max-width: 576px) {
+    .results-summary {
+        flex-direction: column;
+        text-align: center;
+    }
+    
+    .score-circle {
+        margin-right: 0;
+        margin-bottom: 10px;
+    }
+    
+    .results-actions {
+        flex-direction: column;
+    }
+    
+    .results-actions a {
+        width: 100%;
+        text-align: center;
+    }
+}

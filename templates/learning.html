@@ -1,0 +1,267 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ content.title }} - Adaptive Learning{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/learning.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="learning-container">
+    <div class="learning-header">
+        <div class="learning-navigation">
+            <a href="{{ url_for('dashboard') }}" class="btn btn-outline">Back to Dashboard</a>
+        </div>
+        
+        <div class="learning-title">
+            <h2>{{ content.title }}</h2>
+            <div class="content-meta">
+                <span class="difficulty">Difficulty: {{ content.difficulty }}</span>
+                <span class="tags">
+                    {% for tag in content.tags %}
+                    <span class="tag">{{ tag }}</span>
+                    {% endfor %}
+                </span>
+            </div>
+        </div>
+    </div>
+    
+    <div class="learning-body">
+        <div class="content-description">
+            <p>{{ content.description }}</p>
+        </div>
+        
+        <div class="content-sections">
+            {% for section in content.content_data.sections %}
+            <div class="content-section" id="section-{{ loop.index }}">
+                <h3>{{ section.title }}</h3>
+                
+                <div class="section-content">
+                    <div class="text-content">
+                        {{ section.content | safe }}
+                    </div>
+                    
+                    {% if section.media_url %}
+                    <div class="media-content">
+                        {% if section.media_type == 'image' %}
+                        <img src="{{ section.media_url }}" alt="{{ section.title }}">
+                        {% elif section.media_type == 'video' %}
+                        <video controls>
+                            <source src="{{ section.media_url }}" type="video/mp4">
+                            Your browser does not support the video tag.
+                        </video>
+                        {% elif section.media_type == 'audio' %}
+                        <audio controls>
+                            <source src="{{ section.media_url }}" type="audio/mpeg">
+                            Your browser does not support the audio tag.
+                        </audio>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                    
+                    {% if section.learning_tips %}
+                    <div class="learning-tips">
+                        <h4>Learning Tips</h4>
+                        <ul>
+                            {% for tip in section.learning_tips %}
+                            <li>{{ tip }}</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        
+        <div class="learning-navigation-bottom">
+            <div class="section-navigator">
+                <button id="prev-section" class="btn btn-outline" disabled>Previous Section</button>
+                <span id="section-indicator">Section 1 of {{ content.content_data.sections|length }}</span>
+                <button id="next-section" class="btn btn-outline">Next Section</button>
+            </div>
+            
+            <div class="learning-actions">
+                {% if content.has_assessment %}
+                <a href="{{ url_for('assessment', content_id=content.id) }}" class="btn btn-primary" id="start-assessment">Take Assessment</a>
+                {% endif %}
+                <button id="mark-complete" class="btn btn-success">Mark as Complete</button>
+            </div>
+        </div>
+    </div>
+    
+    <div class="learning-sidebar">
+        <div class="sidebar-section">
+            <h3>Knowledge Components</h3>
+            <ul class="knowledge-components-list">
+                {% for kc in content.knowledge_components %}
+                <li>{{ kc.name }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+        
+        <div class="sidebar-section">
+            <h3>Prerequisites</h3>
+            {% if content.prerequisites|length > 0 %}
+            <ul class="prerequisites-list">
+                {% for prereq in content.prerequisites %}
+                <li>{{ prereq }}</li>
+                {% endfor %}
+            </ul>
+            {% else %}
+            <p>No prerequisites for this content.</p>
+            {% endif %}
+        </div>
+        
+        <div class="sidebar-section">
+            <h3>Notes</h3>
+            <div class="notes-container">
+                <textarea id="user-notes" placeholder="Take notes here..."></textarea>
+                <button id="save-notes" class="btn btn-outline">Save Notes</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Section Navigation
+        const sections = document.querySelectorAll('.content-section');
+        const prevButton = document.getElementById('prev-section');
+        const nextButton = document.getElementById('next-section');
+        const sectionIndicator = document.getElementById('section-indicator');
+        let currentSectionIndex = 0;
+        
+        // Hide all sections except the first one
+        for (let i = 1; i < sections.length; i++) {
+            sections[i].style.display = 'none';
+        }
+        
+        // Update section visibility and navigation buttons
+        function updateSectionVisibility() {
+            sections.forEach((section, index) => {
+                section.style.display = index === currentSectionIndex ? 'block' : 'none';
+            });
+            
+            prevButton.disabled = currentSectionIndex === 0;
+            nextButton.disabled = currentSectionIndex === sections.length - 1;
+            sectionIndicator.textContent = `Section ${currentSectionIndex + 1} of ${sections.length}`;
+            
+            // Log section view
+            logInteraction('view_section', {
+                section_index: currentSectionIndex,
+                section_title: sections[currentSectionIndex].querySelector('h3').textContent
+            });
+        }
+        
+        // Navigation button event listeners
+        prevButton.addEventListener('click', function() {
+            if (currentSectionIndex > 0) {
+                currentSectionIndex--;
+                updateSectionVisibility();
+            }
+        });
+        
+        nextButton.addEventListener('click', function() {
+            if (currentSectionIndex < sections.length - 1) {
+                currentSectionIndex++;
+                updateSectionVisibility();
+            }
+        });
+        
+        // Completion button
+        const completeButton = document.getElementById('mark-complete');
+        completeButton.addEventListener('click', function() {
+            logInteraction('complete', {
+                completed_at: new Date().toISOString()
+            });
+            
+            alert('Content marked as complete!');
+            
+            // Check if assessment is available
+            const assessmentButton = document.getElementById('start-assessment');
+            if (assessmentButton) {
+                assessmentButton.classList.add('highlight');
+                assessmentButton.textContent = 'Take Assessment Now';
+            } else {
+                // If no assessment, redirect to dashboard
+                setTimeout(() => {
+                    window.location.href = '{{ url_for("dashboard") }}';
+                }, 1500);
+            }
+        });
+        
+        // Notes functionality
+        const notesTextarea = document.getElementById('user-notes');
+        const saveNotesButton = document.getElementById('save-notes');
+        
+        // Load saved notes if any
+        const savedNotes = localStorage.getItem('notes_{{ content.id }}');
+        if (savedNotes) {
+            notesTextarea.value = savedNotes;
+        }
+        
+        saveNotesButton.addEventListener('click', function() {
+            const notes = notesTextarea.value;
+            localStorage.setItem('notes_{{ content.id }}', notes);
+            
+            logInteraction('save_notes', {
+                notes_length: notes.length
+            });
+            
+            alert('Notes saved successfully!');
+        });
+        
+        // Track time spent on content
+        let startTime = Date.now();
+        let textViewTime = 0;
+        let visualViewTime = 0;
+        
+        // Update time tracking every 5 seconds
+        setInterval(() => {
+            const currentTime = Date.now();
+            const timeSpent = (currentTime - startTime) / 1000; // in seconds
+            startTime = currentTime;
+            
+            // Determine if current section has visual elements
+            const currentSection = sections[currentSectionIndex];
+            const hasVisualElements = currentSection.querySelector('.media-content') !== null;
+            
+            if (hasVisualElements) {
+                visualViewTime += timeSpent;
+            } else {
+                textViewTime += timeSpent;
+            }
+            
+            // Log time spent every minute
+            if ((textViewTime + visualViewTime) % 60 < 5) {
+                logInteraction('time_tracking', {
+                    text_time: Math.round(textViewTime),
+                    visual_time: Math.round(visualViewTime)
+                });
+            }
+        }, 5000);
+        
+        // Function to log user interactions
+        function logInteraction(type, details = {}) {
+            fetch('{{ url_for("log_interaction") }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    content_id: {{ content.id }},
+                    type: type,
+                    timestamp: new Date().toISOString(),
+                    details: details
+                })
+            }).catch(error => console.error('Error logging interaction:', error));
+        }
+        
+        // Initial interaction log - started content
+        logInteraction('start');
+    });
+</script>
+{% endblock %}

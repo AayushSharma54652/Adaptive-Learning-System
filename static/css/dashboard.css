@@ -1,0 +1,384 @@
+/* Dashboard Styles */
+
+.dashboard-container {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.user-welcome {
+    margin-bottom: 30px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.user-welcome h2 {
+    font-size: 1.8rem;
+    color: var(--primary-color);
+    margin-bottom: 5px;
+}
+
+.dashboard-sections {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+}
+
+.dashboard-section {
+    background-color: var(--card-bg);
+    border-radius: 8px;
+    box-shadow: var(--shadow);
+    padding: 20px;
+    margin-bottom: 20px;
+}
+
+.dashboard-section h3 {
+    font-size: 1.2rem;
+    margin-bottom: 15px;
+    color: var(--primary-color);
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+/* Progress Section */
+.progress-section {
+    grid-column: 1 / span 2;
+}
+
+.progress-metrics {
+    display: flex;
+    justify-content: space-between;
+    gap: 20px;
+    margin-bottom: 25px;
+}
+
+.metric {
+    flex: 1;
+    padding: 15px;
+    background-color: rgba(52, 152, 219, 0.05);
+    border-radius: 6px;
+    border: 1px solid rgba(52, 152, 219, 0.1);
+}
+
+.metric-label {
+    font-weight: 500;
+    margin-bottom: 10px;
+}
+
+/* Chart containers */
+.chart-container {
+    width: 100%;
+    height: 300px;
+    margin: 20px 0;
+    position: relative;
+}
+
+/* Knowledge visualization layout */
+.knowledge-visualization {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin-top: 20px;
+}
+
+.knowledge-map {
+    margin-top: 20px;
+}
+
+.knowledge-map h4 {
+    margin-bottom: 15px;
+    font-size: 1.1rem;
+    color: var(--text-color);
+}
+
+.knowledge-components {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 15px;
+}
+
+.knowledge-component {
+    background-color: #f9f9f9;
+    border-radius: 6px;
+    padding: 10px;
+    border: 1px solid var(--border-color);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.knowledge-component:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.component-name {
+    font-weight: 500;
+    margin-bottom: 8px;
+    font-size: 0.9rem;
+}
+
+.component-mastery-bar {
+    height: 8px;
+    background-color: #eee;
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.mastery-value {
+    height: 100%;
+    background-color: var(--primary-color);
+    border-radius: 4px;
+    position: relative;
+    transition: width 0.5s ease;
+}
+
+/* Path visualization */
+.path-visualization {
+    width: 100%;
+    margin: 20px 0;
+    border-radius: 6px;
+    background-color: #f9f9f9;
+    padding: 10px;
+    box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.05);
+}
+
+/* Learning Path Section */
+.learning-path-section {
+    grid-column: 1;
+    grid-row: 2;
+}
+
+.current-path h4 {
+    margin-bottom: 8px;
+    font-size: 1.1rem;
+}
+
+.path-progress {
+    margin: 15px 0;
+}
+
+.path-progress-label {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 5px;
+}
+
+.path-progress-bar {
+    height: 8px;
+    background-color: #eee;
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.path-progress-value {
+    height: 100%;
+    background-color: var(--secondary-color);
+    border-radius: 4px;
+    transition: width 0.5s ease;
+}
+
+.path-completed {
+    margin-top: 15px;
+    padding: 10px;
+    background-color: rgba(46, 204, 113, 0.1);
+    border-radius: 6px;
+    border-left: 3px solid var(--secondary-color);
+}
+
+/* Recommendations Section */
+.recommendations-section {
+    grid-column: 2;
+    grid-row: 2;
+}
+
+.recommendations {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.recommendation-card {
+    padding: 15px;
+    border-radius: 6px;
+    background-color: #f9f9f9;
+    border-left: 3px solid var(--primary-color);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    position: relative;
+}
+
+.recommendation-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.recommendation-card h4 {
+    margin-bottom: 8px;
+    font-size: 1rem;
+}
+
+.recommendation-card p {
+    margin-bottom: 10px;
+    font-size: 0.9rem;
+    color: var(--light-text);
+}
+
+.recommendation-meta {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.8rem;
+    margin-bottom: 12px;
+}
+
+.recommendation-type {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    font-size: 0.7rem;
+    padding: 3px 8px;
+    background-color: rgba(52, 152, 219, 0.1);
+    color: var(--primary-color);
+    border-radius: 12px;
+    font-weight: 500;
+}
+
+.difficulty {
+    padding: 2px 8px;
+    background-color: rgba(52, 152, 219, 0.1);
+    border-radius: 4px;
+    color: var(--primary-color);
+}
+
+.tags {
+    display: flex;
+    gap: 5px;
+    flex-wrap: wrap;
+}
+
+.tag {
+    padding: 2px 8px;
+    background-color: #f0f0f0;
+    border-radius: 4px;
+    font-size: 0.75rem;
+}
+
+/* Recent Activity Section */
+.recent-activity-section {
+    grid-column: 1 / span 2;
+    grid-row: 3;
+}
+
+.activity-timeline {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.activity-item {
+    display: flex;
+    gap: 15px;
+    padding: 12px;
+    border-radius: 6px;
+    background-color: #f9f9f9;
+    transition: background-color 0.3s ease;
+}
+
+.activity-item:hover {
+    background-color: #f0f0f0;
+}
+
+.activity-icon {
+    flex: 0 0 40px;
+    height: 40px;
+    border-radius: 50%;
+    background-color: var(--primary-color);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.activity-content {
+    flex: 1;
+}
+
+.activity-time {
+    font-size: 0.8rem;
+    color: var(--light-text);
+    margin-bottom: 3px;
+}
+
+.activity-description {
+    font-size: 0.9rem;
+}
+
+.activity-description a {
+    margin-left: 10px;
+    font-size: 0.8rem;
+}
+
+.no-activity, .no-recommendations, .no-path {
+    padding: 20px;
+    text-align: center;
+    color: var(--light-text);
+    background-color: #f9f9f9;
+    border-radius: 6px;
+}
+
+/* Icons for activity timeline */
+.icon-play::before {
+    content: "▶";
+}
+
+.icon-check::before {
+    content: "✓";
+}
+
+.icon-quiz::before {
+    content: "?";
+}
+
+.icon-activity::before {
+    content: "•";
+}
+
+/* Responsive Design */
+@media (max-width: 992px) {
+    .dashboard-sections {
+        grid-template-columns: 1fr;
+    }
+    
+    .progress-section, 
+    .learning-path-section, 
+    .recommendations-section, 
+    .recent-activity-section {
+        grid-column: 1;
+    }
+    
+    .learning-path-section {
+        grid-row: 2;
+    }
+    
+    .recommendations-section {
+        grid-row: 3;
+    }
+    
+    .recent-activity-section {
+        grid-row: 4;
+    }
+    
+    .progress-metrics {
+        flex-direction: column;
+    }
+    
+    .knowledge-visualization {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 576px) {
+    .knowledge-components {
+        grid-template-columns: 1fr;
+    }
+    
+    .chart-container {
+        height: 250px;
+    }
+}

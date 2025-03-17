@@ -1,0 +1,192 @@
+{% extends 'base.html' %}
+
+{% block title %}Dashboard - Adaptive Learning{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="dashboard-container">
+    <div class="user-welcome">
+        <h2>Welcome, {{ username }}!</h2>
+        <p>Your personalized learning dashboard</p>
+    </div>
+    
+    <div class="dashboard-sections">
+        <div class="dashboard-section progress-section">
+            <h3>Your Progress</h3>
+            
+            <div class="progress-metrics">
+                <div class="metric">
+                    <div class="metric-label">Knowledge Mastery</div>
+                    <div class="progress-bar">
+                        <div class="progress-value" style="width: {{ progress.average_mastery * 100 }}%;">
+                            {{ (progress.average_mastery * 100) | round(1) }}%
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="metric">
+                    <div class="metric-label">Path Completion</div>
+                    <div class="progress-bar">
+                        <div class="progress-value" style="width: {{ progress.path_completion }}%;">
+                            {{ progress.path_completion | round(1) }}%
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="metric">
+                    <div class="metric-label">Assessment Accuracy</div>
+                    <div class="progress-bar">
+                        <div class="progress-value" style="width: {{ progress.assessment_accuracy }}%;">
+                            {{ progress.assessment_accuracy | round(1) }}%
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- New: Progress Chart -->
+            <div id="progress-chart" class="chart-container"></div>
+            
+            <div class="knowledge-map">
+                <h4>Knowledge Map</h4>
+                
+                <!-- New: Knowledge Visualization Container -->
+                <div class="knowledge-visualization">
+                    <div id="knowledge-radar" class="chart-container"></div>
+                    
+                    <div class="knowledge-components">
+                        {% for component in profile.knowledge_state %}
+                        <div class="knowledge-component">
+                            <div class="component-name">{{ component.name }}</div>
+                            <div class="component-mastery-bar">
+                                <div class="mastery-value" style="width: {{ component.mastery_level * 100 }}%;">
+                                    {{ (component.mastery_level * 100) | round(0) }}%
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="dashboard-section learning-path-section">
+            <h3>Your Learning Path</h3>
+            
+            {% if profile.learning_path %}
+            <div class="current-path">
+                <h4>{{ profile.learning_path.name }}</h4>
+                <p>{{ profile.learning_path.description }}</p>
+                
+                <!-- New: Learning Path Visualization -->
+                <div id="learning-path-visual" class="path-visualization"></div>
+                
+                <div class="path-progress">
+                    <div class="path-progress-label">
+                        Progress: {{ profile.learning_path.current_position }} / {{ profile.learning_path.total_items if profile.learning_path.total_items else '?' }}
+                    </div>
+                    <div class="path-progress-bar">
+                        <div class="path-progress-value" style="width: {{ progress.path_completion }}%;"></div>
+                    </div>
+                </div>
+                
+                {% if profile.learning_path.completed %}
+                <div class="path-completed">
+                    <p>Congratulations! You've completed this learning path.</p>
+                </div>
+                {% endif %}
+            </div>
+            {% else %}
+            <div class="no-path">
+                <p>You haven't started a learning path yet.</p>
+            </div>
+            {% endif %}
+        </div>
+        
+        <div class="dashboard-section recommendations-section">
+            <h3>Recommended for You</h3>
+            
+            <div class="recommendations">
+                {% if recommended_content %}
+                {% for content in recommended_content %}
+                <div class="recommendation-card">
+                    <h4>{{ content.title }}</h4>
+                    <p>{{ content.description }}</p>
+                    <div class="recommendation-meta">
+                        <span class="difficulty">Difficulty: {{ content.difficulty }}</span>
+                        <span class="tags">
+                            {% for tag in content.tags %}
+                            <span class="tag">{{ tag }}</span>
+                            {% endfor %}
+                        </span>
+                    </div>
+                    <!-- New: Added recommendation type indicator -->
+                    <div class="recommendation-type">{{ content.recommendation_type|replace('_', ' ')|title }}</div>
+                    <a href="{{ url_for('learning_content', content_id=content.content_id) }}" class="btn btn-primary">Start Learning</a>
+                </div>
+                {% endfor %}
+                {% else %}
+                <div class="no-recommendations">
+                    <p>No recommendations available at the moment.</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <div class="dashboard-section recent-activity-section">
+            <h3>Recent Activity</h3>
+            
+            <div class="activity-timeline">
+                {% if progress.recent_activity %}
+                {% for activity in progress.recent_activity %}
+                <div class="activity-item">
+                    <div class="activity-icon">
+                        {% if activity.interaction_type == 'start' %}
+                        <i class="icon-play"></i>
+                        {% elif activity.interaction_type == 'complete' %}
+                        <i class="icon-check"></i>
+                        {% elif activity.interaction_type == 'assessment' %}
+                        <i class="icon-quiz"></i>
+                        {% else %}
+                        <i class="icon-activity"></i>
+                        {% endif %}
+                    </div>
+                    <div class="activity-content">
+                        <div class="activity-time">{{ activity.timestamp }}</div>
+                        <div class="activity-description">
+                            {% if activity.interaction_type == 'start' %}
+                            Started learning content
+                            {% elif activity.interaction_type == 'complete' %}
+                            Completed learning content
+                            {% elif activity.interaction_type == 'assessment' %}
+                            Completed an assessment
+                            {% else %}
+                            {{ activity.interaction_type }}
+                            {% endif %}
+                            
+                            {% if activity.content_id %}
+                            <a href="{{ url_for('learning_content', content_id=activity.content_id) }}">View Content</a>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+                {% else %}
+                <div class="no-activity">
+                    <p>No recent activity.</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<!-- Include Chart.js library -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+<script src="{{ url_for('static', filename='js/dashboard-visualization.js') }}"></script>
+{% endblock %}
