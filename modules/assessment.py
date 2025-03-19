@@ -123,69 +123,178 @@ class AssessmentEngine:
         """
         Evaluate user responses to assessment questions.
         Records responses, calculates scores, and provides feedback.
+        Now also detects assessment failures and triggers content adaptation.
+        """
+        conn = None
+        try:
+            conn = self.get_db_connection()
+            
+            results = []
+            
+            for response in responses:
+                question_id = response['question_id']
+                user_answer = response['answer']
+                response_time = response.get('response_time', 0)
+                
+                # Get the question details
+                question = conn.execute(
+                    '''
+                    SELECT question_text, correct_answer, explanation, difficulty, knowledge_component_id
+                    FROM assessment_items
+                    WHERE id = ?
+                    ''',
+                    (question_id,)
+                ).fetchone()
+                
+                if not question:
+                    continue
+                
+                # Check if the answer is correct
+                is_correct = user_answer == question['correct_answer']
+                
+                # Calculate score (0-1)
+                score = 1.0 if is_correct else 0.0
+                
+                # Record the response
+                conn.execute(
+                    '''
+                    INSERT INTO user_responses
+                    (user_id, assessment_item_id, user_response, is_correct, response_time_seconds)
+                    VALUES (?, ?, ?, ?, ?)
+                    ''',
+                    (user_id, question_id, user_answer, is_correct, response_time)
+                )
+                
+                # Add to results
+                results.append({
+                    'question_id': question_id,
+                    'is_correct': is_correct,
+                    'correct_answer': question['correct_answer'],
+                    'explanation': question['explanation'],
+                    'score': score,
+                    'knowledge_component_id': question['knowledge_component_id']
+                })
+            
+            # Calculate overall results
+            total_score = sum(r['score'] for r in results) / len(results) if results else 0
+            mastery_achieved = total_score >= 0.8  # Consider mastery at 80%
+            
+            # Commit changes to the database
+            conn.commit()
+            
+            # Close connection before calling other methods that use the database
+            conn.close()
+            conn = None
+            
+            # Record assessment success or failure
+            if not mastery_achieved:
+                # This is an assessment failure
+                self._record_assessment_failure(user_id, content_id, total_score)
+            
+            assessment_result = {
+                'questions': results,
+                'total_score': total_score,
+                'mastery_achieved': mastery_achieved,
+                'feedback': self._generate_feedback(results, total_score),
+                'needs_adaptation': not mastery_achieved
+            }
+            
+            return assessment_result
+            
+        except Exception as e:
+            logger.error(f"Error evaluating assessment: {e}")
+            if conn:
+                # Rollback any uncommitted changes
+                conn.rollback()
+            raise
+        finally:
+            # Always close the connection in the finally block
+            if conn:
+                conn.close()
+    
+    def _record_assessment_failure(self, user_id, content_id, score):
+        """
+        Record an assessment failure for a user and content.
+        Updates the failure count and last attempt timestamp.
+        
+        Args:
+            user_id: The ID of the user
+            content_id: The ID of the content
+            score: The score achieved in the assessment
+        """
+        try:
+            conn = self.get_db_connection()
+            
+            # Check if there's an existing record
+            existing = conn.execute(
+                '''
+                SELECT id, failure_count
+                FROM assessment_failures
+                WHERE user_id = ? AND content_id = ?
+                ''',
+                (user_id, content_id)
+            ).fetchone()
+            
+            timestamp = datetime.now().isoformat()
+            
+            if existing:
+                # Update the existing record
+                conn.execute(
+                    '''
+                    UPDATE assessment_failures
+                    SET failure_count = failure_count + 1,
+                        last_score = ?,
+                        last_attempt_at = ?,
+                        adaptation_provided = 0
+                    WHERE id = ?
+                    ''',
+                    (score, timestamp, existing['id'])
+                )
+            else:
+                # Create a new record
+                conn.execute(
+                    '''
+                    INSERT INTO assessment_failures
+                    (user_id, content_id, failure_count, last_score, last_attempt_at, adaptation_provided)
+                    VALUES (?, ?, 1, ?, ?, 0)
+                    ''',
+                    (user_id, content_id, score, timestamp)
+                )
+            
+            conn.commit()
+            conn.close()
+            
+            logger.info(f"Recorded assessment failure for user {user_id} on content {content_id} with score {score}")
+            
+        except Exception as e:
+            logger.error(f"Error recording assessment failure: {e}")
+            # Make sure to close the connection even if there's an error
+            if 'conn' in locals():
+                conn.close()
+    
+    def mark_adaptation_provided(self, user_id, content_id):
+        """
+        Mark that an adaptation has been provided for a user's assessment failure.
+        
+        Args:
+            user_id: The ID of the user
+            content_id: The ID of the content
         """
         conn = self.get_db_connection()
         
-        results = []
-        
-        for response in responses:
-            question_id = response['question_id']
-            user_answer = response['answer']
-            response_time = response.get('response_time', 0)
-            
-            # Get the question details
-            question = conn.execute(
-                '''
-                SELECT question_text, correct_answer, explanation, difficulty, knowledge_component_id
-                FROM assessment_items
-                WHERE id = ?
-                ''',
-                (question_id,)
-            ).fetchone()
-            
-            if not question:
-                continue
-            
-            # Check if the answer is correct
-            is_correct = user_answer == question['correct_answer']
-            
-            # Calculate score (0-1)
-            score = 1.0 if is_correct else 0.0
-            
-            # Record the response
-            conn.execute(
-                '''
-                INSERT INTO user_responses
-                (user_id, assessment_item_id, user_response, is_correct, response_time_seconds)
-                VALUES (?, ?, ?, ?, ?)
-                ''',
-                (user_id, question_id, user_answer, is_correct, response_time)
-            )
-            
-            # Add to results
-            results.append({
-                'question_id': question_id,
-                'is_correct': is_correct,
-                'correct_answer': question['correct_answer'],
-                'explanation': question['explanation'],
-                'score': score,
-                'knowledge_component_id': question['knowledge_component_id']
-            })
+        conn.execute(
+            '''
+            UPDATE assessment_failures
+            SET adaptation_provided = 1
+            WHERE user_id = ? AND content_id = ?
+            ''',
+            (user_id, content_id)
+        )
         
         conn.commit()
         conn.close()
         
-        # Calculate overall results
-        total_score = sum(r['score'] for r in results) / len(results) if results else 0
-        
-        assessment_result = {
-            'questions': results,
-            'total_score': total_score,
-            'mastery_achieved': total_score >= 0.8,  # Consider mastery at 80%
-            'feedback': self._generate_feedback(results, total_score)
-        }
-        
-        return assessment_result
+        logger.info(f"Marked adaptation as provided for user {user_id} on content {content_id}")
     
     def _generate_feedback(self, results, total_score):
         """Generate feedback based on assessment results"""
@@ -216,6 +325,10 @@ class AssessmentEngine:
         
         if specific_feedback:
             feedback += "\n\nHere's feedback on questions you missed:\n" + "\n".join(specific_feedback)
+        
+        # Add adaptive learning feedback if student didn't achieve mastery
+        if total_score < 0.8:
+            feedback += "\n\nDon't worry! We'll provide you with simplified content that focuses on the areas you're struggling with. A customized version of this material will help you better understand the concepts."
         
         return feedback
     
@@ -262,3 +375,50 @@ class AssessmentEngine:
         knowledge_gaps.sort(key=lambda x: x['accuracy'])
         
         return knowledge_gaps
+    
+    def check_needs_adapted_content(self, user_id, content_id):
+        """
+        Check if a user needs adapted content based on assessment history.
+        
+        Args:
+            user_id: The ID of the user
+            content_id: The ID of the content
+            
+        Returns:
+            Boolean indicating whether adapted content is needed
+        """
+        conn = self.get_db_connection()
+        
+        # First check if there is any adapted content already available
+        has_adapted_content = conn.execute(
+            '''
+            SELECT COUNT(*) as count
+            FROM adapted_content
+            WHERE user_id = ? AND original_content_id = ?
+            ''',
+            (user_id, content_id)
+        ).fetchone()
+        
+        if has_adapted_content and has_adapted_content['count'] > 0:
+            # We have adapted content for this user/content
+            conn.close()
+            return True
+        
+        # Check assessment failures - this is just to determine if we need to create adaptation
+        failure = conn.execute(
+            '''
+            SELECT failure_count, adaptation_provided
+            FROM assessment_failures
+            WHERE user_id = ? AND content_id = ?
+            ''',
+            (user_id, content_id)
+        ).fetchone()
+        
+        conn.close()
+        
+        # If there are failures and adaptation hasn't been provided yet, 
+        # content needs to be adapted
+        if failure and failure['failure_count'] > 0 and not failure['adaptation_provided']:
+            return True
+        
+        return False

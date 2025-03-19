@@ -1,0 +1,141 @@
+/* Styles for adapted learning content */
+
+.adapted-content {
+    position: relative;
+}
+
+.adaptation-banner {
+    background-color: #e3f2fd;
+    border-left: 4px solid #2196f3;
+    padding: 15px;
+    margin-bottom: 20px;
+    border-radius: 0 4px 4px 0;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.banner-content {
+    display: flex;
+    align-items: center;
+}
+
+.banner-icon {
+    margin-right: 15px;
+    font-size: 24px;
+    color: #2196f3;
+}
+
+.banner-text h4 {
+    margin: 0 0 5px 0;
+    color: #0d47a1;
+    font-size: 18px;
+}
+
+.banner-text p {
+    margin: 0;
+    color: #1565c0;
+    font-size: 14px;
+}
+
+.simplified-section {
+    border-left: 3px solid #4caf50;
+    padding-left: 15px;
+    background-color: #f1f8e9;
+    padding: 15px;
+    border-radius: 4px;
+    margin-bottom: 25px;
+}
+
+.simplified-section-title {
+    color: #388e3c;
+    display: flex;
+    align-items: center;
+}
+
+.simplified-icon {
+    margin-left: 10px;
+    color: #4caf50;
+    font-size: 16px;
+}
+
+.content-section h3[data-simplified="true"]::after {
+    content: " (Simplified)";
+    font-size: 0.8em;
+    color: #4caf50;
+    font-weight: normal;
+}
+
+.additional-explanation {
+    background-color: #fff3e0;
+    border: 1px solid #ffe0b2;
+    border-radius: 4px;
+    padding: 15px;
+    margin: 20px 0;
+}
+
+.additional-explanation h3 {
+    color: #e65100;
+    margin-top: 0;
+}
+
+.practice-exercise {
+    background-color: #e8f5e9;
+    border: 1px solid #c8e6c9;
+    border-radius: 4px;
+    padding: 15px;
+    margin: 15px 0;
+}
+
+.practice-exercise h4 {
+    color: #2e7d32;
+    margin-top: 0;
+}
+
+.exercise-question {
+    font-weight: bold;
+    margin-bottom: 10px;
+}
+
+.exercise-answer {
+    background-color: #ffffff;
+    padding: 10px;
+    border-radius: 4px;
+    border-left: 3px solid #4caf50;
+    margin-top: 10px;
+}
+
+.show-answer {
+    background-color: #4caf50;
+    color: white;
+    border: none;
+    padding: 5px 10px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    margin-top: 10px;
+}
+
+.show-answer:hover {
+    background-color: #388e3c;
+}
+
+.learning-tips {
+    background-color: #e1f5fe;
+    border-radius: 4px;
+    padding: 15px;
+    margin: 15px 0;
+}
+
+.learning-tips h4 {
+    color: #0288d1;
+    margin-top: 0;
+}
+
+.learning-tips ul {
+    margin: 10px 0 0 0;
+    padding-left: 20px;
+}
+
+.learning-tips li {
+    margin-bottom: 5px;
+    color: #0277bd;
+}

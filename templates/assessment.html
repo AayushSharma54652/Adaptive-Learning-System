@@ -182,7 +182,7 @@
                     <p>You answered ${correctCount} out of ${totalCount} questions correctly.</p>
                     ${data.results.mastery_achieved 
                         ? '<p class="mastery-achieved">Congratulations! You\'ve achieved mastery of this content.</p>' 
-                        : '<p>Continue practicing to achieve mastery.</p>'}
+                        : '<p class="mastery-not-achieved">Continue practicing to achieve mastery.</p>'}
                 </div>
             `;
             resultsSummary.innerHTML = summaryHTML;
@@ -209,6 +209,48 @@
             });
             
             resultsQuestions.innerHTML = questionsHTML;
+            
+            // If adaptation is available, show a message
+            if (data.results.adaptation_available) {
+                const adaptationMessage = document.createElement('div');
+                adaptationMessage.className = 'adaptation-message';
+                adaptationMessage.innerHTML = `
+                    <div class="adaptation-icon">
+                        <i class="icon-lightbulb"></i>
+                    </div>
+                    <div class="adaptation-text">
+                        <h4>Personalized Learning Content Available</h4>
+                        <p>${data.results.adaptation_message || 'We\'ve prepared a simplified version of this content tailored to your learning needs.'}</p>
+                    </div>
+                `;
+                
+                // Add a button to view the adapted content
+                const viewAdaptedButton = document.createElement('button');
+                viewAdaptedButton.className = 'btn btn-primary view-adapted';
+                viewAdaptedButton.textContent = 'View Adapted Content';
+                viewAdaptedButton.addEventListener('click', function() {
+                    window.location.href = `/learning/${data.results.content_id || {{ content_id }}}`; 
+                });
+                
+                adaptationMessage.appendChild(viewAdaptedButton);
+                
+                // Insert the message above the results actions
+                const resultsActions = document.querySelector('.results-actions');
+                resultsContainer.insertBefore(adaptationMessage, resultsActions);
+            }
+            
+            // Set next content link
+            if (data.next_content) {
+                nextContentLink.href = `/learning/${data.next_content.content_id}`;
+            } else {
+                nextContentLink.textContent = 'Return to Dashboard';
+                nextContentLink.href = '{{ url_for("dashboard") }}';
+            }
+            
+            // Hide questions, show results
+            questionsContainer.classList.add('hidden');
+            document.querySelector('.assessment-actions').classList.add('hidden');
+            resultsContainer.classList.remove('hidden');
         }
     });
 </script>

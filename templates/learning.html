@@ -4,10 +4,11 @@
 
 {% block extra_css %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/learning.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/adapted-content.css') }}">
 {% endblock %}
 
 {% block content %}
-<div class="learning-container">
+<div class="learning-container" data-content-id="{{ content.id }}" data-is-adapted="{{ 'true' if content.is_adapted else 'false' }}">
     <div class="learning-header">
         <div class="learning-navigation">
             <a href="{{ url_for('dashboard') }}" class="btn btn-outline">Back to Dashboard</a>
@@ -34,7 +35,7 @@
         <div class="content-sections">
             {% for section in content.content_data.sections %}
             <div class="content-section" id="section-{{ loop.index }}">
-                <h3>{{ section.title }}</h3>
+                <h3 {% if 'Simplified' in section.title %}data-simplified="true"{% endif %}>{{ section.title }}</h3>
                 
                 <div class="section-content">
                     <div class="text-content">
@@ -121,10 +122,22 @@
             </div>
         </div>
     </div>
+    
+    {% if content.is_adapted %}
+    <div class="adaptation-info">
+        <div class="info-box">
+            <h4>About This Adapted Content</h4>
+            <p>{{ content.adaptation_reason }}</p>
+            <p>This content has been simplified and enhanced with additional explanations to help you better understand the concepts.</p>
+        </div>
+    </div>
+    {% endif %}
 </div>
 {% endblock %}
 
 {% block extra_js %}
+<script src="{{ url_for('static', filename='js/main.js') }}"></script>
+<script src="{{ url_for('static', filename='js/adapted-content.js') }}"></script>
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         // Section Navigation

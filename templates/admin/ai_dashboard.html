@@ -1,0 +1,445 @@
+{% extends 'base.html' %}
+
+{% block title %}AI Dashboard - Adaptive Learning{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/ai-dashboard.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="admin-container">
+    <div class="admin-header">
+        <h2>AI System Dashboard</h2>
+        <p>Monitor and manage the AI components of your adaptive learning system</p>
+    </div>
+    
+    <div class="admin-content">
+        <div class="admin-sidebar">
+            <div class="admin-nav">
+                <a href="#overview" class="admin-nav-item active" data-target="ai-overview">Overview</a>
+                <a href="#models" class="admin-nav-item" data-target="ai-models">AI Models</a>
+                <a href="#predictions" class="admin-nav-item" data-target="ai-predictions">Predictions</a>
+                <a href="#recommendations" class="admin-nav-item" data-target="ai-recommendations">Recommendations</a>
+                <a href="#learning-styles" class="admin-nav-item" data-target="ai-learning-styles">Learning Styles</a>
+            </div>
+        </div>
+        
+        <div class="admin-main">
+            <!-- AI Overview Section -->
+            <div id="ai-overview" class="admin-section active">
+                <h3>AI System Overview</h3>
+                
+                <div class="overview-cards">
+                    <div class="overview-card">
+                        <div class="card-icon model-icon"></div>
+                        <div class="card-content">
+                            <h4>AI Models</h4>
+                            <div class="card-value">{{ ai_stats.models_count }}</div>
+                            <div class="card-change {{ 'positive' if ai_stats.models_accuracy >= 0 else 'negative' }}">
+                                Avg. Accuracy: {{ ai_stats.models_accuracy }}%
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="overview-card">
+                        <div class="card-icon prediction-icon"></div>
+                        <div class="card-content">
+                            <h4>Predictions</h4>
+                            <div class="card-value">{{ ai_stats.predictions_count }}</div>
+                            <div class="card-change positive">{{ ai_stats.predictions_daily_avg }} daily avg</div>
+                        </div>
+                    </div>
+                    
+                    <div class="overview-card">
+                        <div class="card-icon recommendation-icon"></div>
+                        <div class="card-content">
+                            <h4>Content Recommendations</h4>
+                            <div class="card-value">{{ ai_stats.recommendations_count }}</div>
+                            <div class="card-change positive">{{ ai_stats.recommendations_engagement }}% engagement</div>
+                        </div>
+                    </div>
+                    
+                    <div class="overview-card">
+                        <div class="card-icon learning-style-icon"></div>
+                        <div class="card-content">
+                            <h4>Learning Style Detection</h4>
+                            <div class="card-value">{{ ai_stats.styles_detected }}</div>
+                            <div class="card-change positive">{{ ai_stats.style_confidence }}% confidence</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="overview-charts">
+                    <div class="chart-container">
+                        <h4>AI System Performance</h4>
+                        <canvas id="ai-performance-chart"></canvas>
+                    </div>
+                    
+                    <div class="chart-container">
+                        <h4>Model Accuracy</h4>
+                        <canvas id="model-accuracy-chart"></canvas>
+                    </div>
+                </div>
+                
+                <div class="ai-insights">
+                    <h4>AI System Insights</h4>
+                    <div class="insights-list">
+                        {% for insight in ai_insights %}
+                        <div class="insight-item {{ insight.type }}">
+                            <div class="insight-icon"></div>
+                            <div class="insight-content">
+                                <h5>{{ insight.title }}</h5>
+                                <p>{{ insight.description }}</p>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            
+            <!-- AI Models Section -->
+            <div id="ai-models" class="admin-section">
+                <div class="section-header">
+                    <h3>AI Models Management</h3>
+                    <div class="section-actions">
+                        <button id="train-models-btn" class="btn btn-primary">Train Models</button>
+                    </div>
+                </div>
+                
+                <div class="models-list">
+                    <div class="model-card">
+                        <div class="model-header">
+                            <h4>Performance Prediction Model</h4>
+                            <span class="model-status {{ 'active' if models.performance_model.active else 'inactive' }}">
+                                {{ 'Active' if models.performance_model.active else 'Inactive' }}
+                            </span>
+                        </div>
+                        <div class="model-details">
+                            <div class="model-info">
+                                <p><strong>Type:</strong> Gradient Boosting Regressor</p>
+                                <p><strong>Last Trained:</strong> {{ models.performance_model.last_trained }}</p>
+                                <p><strong>Training Data:</strong> {{ models.performance_model.training_samples }} samples</p>
+                                <p><strong>Accuracy:</strong> {{ models.performance_model.accuracy }}%</p>
+                            </div>
+                            <div class="model-actions">
+                                <button class="btn btn-outline train-model" data-model="performance">Train Model</button>
+                                <button class="btn btn-outline view-model" data-model="performance">View Details</button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="model-card">
+                        <div class="model-header">
+                            <h4>Engagement Prediction Model</h4>
+                            <span class="model-status {{ 'active' if models.engagement_model.active else 'inactive' }}">
+                                {{ 'Active' if models.engagement_model.active else 'Inactive' }}
+                            </span>
+                        </div>
+                        <div class="model-details">
+                            <div class="model-info">
+                                <p><strong>Type:</strong> Random Forest Classifier</p>
+                                <p><strong>Last Trained:</strong> {{ models.engagement_model.last_trained }}</p>
+                                <p><strong>Training Data:</strong> {{ models.engagement_model.training_samples }} samples</p>
+                                <p><strong>Accuracy:</strong> {{ models.engagement_model.accuracy }}%</p>
+                            </div>
+                            <div class="model-actions">
+                                <button class="btn btn-outline train-model" data-model="engagement">Train Model</button>
+                                <button class="btn btn-outline view-model" data-model="engagement">View Details</button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="model-card">
+                        <div class="model-header">
+                            <h4>Learning Style Detection Model</h4>
+                            <span class="model-status {{ 'active' if models.learning_style_model.active else 'inactive' }}">
+                                {{ 'Active' if models.learning_style_model.active else 'Inactive' }}
+                            </span>
+                        </div>
+                        <div class="model-details">
+                            <div class="model-info">
+                                <p><strong>Type:</strong> Random Forest Classifier</p>
+                                <p><strong>Last Trained:</strong> {{ models.learning_style_model.last_trained }}</p>
+                                <p><strong>Training Data:</strong> {{ models.learning_style_model.training_samples }} samples</p>
+                                <p><strong>Accuracy:</strong> {{ models.learning_style_model.accuracy }}%</p>
+                            </div>
+                            <div class="model-actions">
+                                <button class="btn btn-outline train-model" data-model="learning_style">Train Model</button>
+                                <button class="btn btn-outline view-model" data-model="learning_style">View Details</button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="model-card">
+                        <div class="model-header">
+                            <h4>Content Recommendation Engine</h4>
+                            <span class="model-status {{ 'active' if models.content_recommendation.active else 'inactive' }}">
+                                {{ 'Active' if models.content_recommendation.active else 'Inactive' }}
+                            </span>
+                        </div>
+                        <div class="model-details">
+                            <div class="model-info">
+                                <p><strong>Type:</strong> TF-IDF Vectorization + Cosine Similarity</p>
+                                <p><strong>Last Updated:</strong> {{ models.content_recommendation.last_trained }}</p>
+                                <p><strong>Content Items:</strong> {{ models.content_recommendation.content_count }}</p>
+                                <p><strong>Effectiveness:</strong> {{ models.content_recommendation.effectiveness }}%</p>
+                            </div>
+                            <div class="model-actions">
+                                <button class="btn btn-outline train-model" data-model="content_vectors">Update Vectors</button>
+                                <button class="btn btn-outline view-model" data-model="content_recommendation">View Details</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- AI Predictions Section -->
+            <div id="ai-predictions" class="admin-section">
+                <h3>Prediction Analytics</h3>
+                
+                <div class="filters-bar">
+                    <div class="filter-group">
+                        <label for="prediction-type">Prediction Type:</label>
+                        <select id="prediction-type">
+                            <option value="all">All Types</option>
+                            <option value="performance">Performance</option>
+                            <option value="engagement">Engagement</option>
+                        </select>
+                    </div>
+                    
+                    <div class="filter-group">
+                        <label for="prediction-timeframe">Timeframe:</label>
+                        <select id="prediction-timeframe">
+                            <option value="7">Last 7 days</option>
+                            <option value="30" selected>Last 30 days</option>
+                            <option value="90">Last 90 days</option>
+                        </select>
+                    </div>
+                    
+                    <button id="update-predictions" class="btn btn-outline">Update</button>
+                </div>
+                
+                <div class="prediction-charts">
+                    <div class="chart-container">
+                        <h4>Performance Predictions vs. Actual Results</h4>
+                        <canvas id="performance-accuracy-chart"></canvas>
+                    </div>
+                    
+                    <div class="chart-container">
+                        <h4>Disengagement Risk Distribution</h4>
+                        <canvas id="disengagement-risk-chart"></canvas>
+                    </div>
+                </div>
+                
+                <div class="alerts-container">
+                    <h4>Current High-Risk Students</h4>
+                    
+                    <div class="table-container">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Student</th>
+                                    <th>Risk Type</th>
+                                    <th>Risk Level</th>
+                                    <th>Predicted Value</th>
+                                    <th>Contributing Factors</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for alert in high_risk_students %}
+                                <tr>
+                                    <td>{{ alert.username }}</td>
+                                    <td>{{ alert.risk_type }}</td>
+                                    <td>
+                                        <span class="risk-indicator {{ alert.risk_level }}">
+                                            {{ alert.risk_level|capitalize }}
+                                        </span>
+                                    </td>
+                                    <td>{{ alert.predicted_value }}</td>
+                                    <td>{{ alert.factors }}</td>
+                                    <td class="action-buttons">
+                                        <button class="btn-icon view-student" data-id="{{ alert.user_id }}">👁️</button>
+                                        <button class="btn-icon send-intervention" data-id="{{ alert.user_id }}">📩</button>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- AI Recommendations Section -->
+            <div id="ai-recommendations" class="admin-section">
+                <h3>Recommendation Analytics</h3>
+                
+                <div class="recommendation-metrics">
+                    <div class="metric-card">
+                        <h4>Recommendation Engagement</h4>
+                        <div class="metric-value">{{ recommendation_metrics.engagement_rate }}%</div>
+                        <div class="metric-description">of recommendations are engaged with</div>
+                    </div>
+                    
+                    <div class="metric-card">
+                        <h4>Completion Rate</h4>
+                        <div class="metric-value">{{ recommendation_metrics.completion_rate }}%</div>
+                        <div class="metric-description">of recommended content completed</div>
+                    </div>
+                    
+                    <div class="metric-card">
+                        <h4>Average Relevance</h4>
+                        <div class="metric-value">{{ recommendation_metrics.avg_relevance }}/5</div>
+                        <div class="metric-description">user relevance rating</div>
+                    </div>
+                    
+                    <div class="metric-card">
+                        <h4>Mastery Improvement</h4>
+                        <div class="metric-value">+{{ recommendation_metrics.mastery_improvement }}%</div>
+                        <div class="metric-description">improvement in targeted knowledge components</div>
+                    </div>
+                </div>
+                
+                <div class="recommendation-charts">
+                    <div class="chart-container">
+                        <h4>Recommendation Types Distribution</h4>
+                        <canvas id="recommendation-types-chart"></canvas>
+                    </div>
+                    
+                    <div class="chart-container">
+                        <h4>Recommendation Effectiveness by Type</h4>
+                        <canvas id="recommendation-effectiveness-chart"></canvas>
+                    </div>
+                </div>
+                
+                <div class="content-effectiveness">
+                    <h4>Most Effective Content</h4>
+                    
+                    <div class="table-container">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Content Title</th>
+                                    <th>Type</th>
+                                    <th>Recommendation Count</th>
+                                    <th>Engagement Rate</th>
+                                    <th>Completion Rate</th>
+                                    <th>Average Mastery Gain</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for content in effective_content %}
+                                <tr>
+                                    <td>{{ content.title }}</td>
+                                    <td>{{ content.content_type }}</td>
+                                    <td>{{ content.recommendation_count }}</td>
+                                    <td>{{ content.engagement_rate }}%</td>
+                                    <td>{{ content.completion_rate }}%</td>
+                                    <td>+{{ content.mastery_gain }}%</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Learning Styles Section -->
+            <div id="ai-learning-styles" class="admin-section">
+                <h3>Learning Style Analytics</h3>
+                
+                <div class="style-distribution">
+                    <div class="chart-container">
+                        <h4>Learning Style Distribution</h4>
+                        <canvas id="style-distribution-chart"></canvas>
+                    </div>
+                    
+                    <div class="style-stats">
+                        <div class="style-card visual">
+                            <h5>Visual Learners</h5>
+                            <div class="style-value">{{ learning_style_stats.visual.percentage }}%</div>
+                            <div class="style-metric">{{ learning_style_stats.visual.count }} students</div>
+                            <div class="style-performance">Avg. Performance: {{ learning_style_stats.visual.avg_performance }}%</div>
+                        </div>
+                        
+                        <div class="style-card auditory">
+                            <h5>Auditory Learners</h5>
+                            <div class="style-value">{{ learning_style_stats.auditory.percentage }}%</div>
+                            <div class="style-metric">{{ learning_style_stats.auditory.count }} students</div>
+                            <div class="style-performance">Avg. Performance: {{ learning_style_stats.auditory.avg_performance }}%</div>
+                        </div>
+                        
+                        <div class="style-card kinesthetic">
+                            <h5>Kinesthetic Learners</h5>
+                            <div class="style-value">{{ learning_style_stats.kinesthetic.percentage }}%</div>
+                            <div class="style-metric">{{ learning_style_stats.kinesthetic.count }} students</div>
+                            <div class="style-performance">Avg. Performance: {{ learning_style_stats.kinesthetic.avg_performance }}%</div>
+                        </div>
+                        
+                        <div class="style-card reading-writing">
+                            <h5>Reading/Writing Learners</h5>
+                            <div class="style-value">{{ learning_style_stats.reading_writing.percentage }}%</div>
+                            <div class="style-metric">{{ learning_style_stats.reading_writing.count }} students</div>
+                            <div class="style-performance">Avg. Performance: {{ learning_style_stats.reading_writing.avg_performance }}%</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="content-by-style">
+                    <h4>Content Effectiveness by Learning Style</h4>
+                    
+                    <div class="chart-container">
+                        <canvas id="content-by-style-chart"></canvas>
+                    </div>
+                </div>
+                
+                <div class="style-insights">
+                    <h4>Learning Style Insights</h4>
+                    
+                    <div class="insights-cards">
+                        {% for insight in learning_style_insights %}
+                        <div class="insight-card">
+                            <h5>{{ insight.title }}</h5>
+                            <p>{{ insight.description }}</p>
+                            <div class="insight-stats">{{ insight.stats }}</div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Training Modal -->
+<div id="training-modal" class="modal">
+    <div class="modal-content">
+        <span class="close-modal">&times;</span>
+        <h3>Training AI Model</h3>
+        <div class="training-status">
+            <div class="training-progress">
+                <div class="progress-bar">
+                    <div class="progress-value" style="width: 0%"></div>
+                </div>
+                <div class="progress-text">Initializing...</div>
+            </div>
+            <div class="training-details">
+                <p><strong>Model:</strong> <span id="model-name">-</span></p>
+                <p><strong>Training Samples:</strong> <span id="training-samples">-</span></p>
+                <p><strong>Status:</strong> <span id="training-status">Waiting to start</span></p>
+            </div>
+        </div>
+        <div class="training-actions">
+            <button id="start-training" class="btn btn-primary">Start Training</button>
+            <button id="cancel-training" class="btn btn-outline">Cancel</button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="{{ url_for('static', filename='js/admin.js') }}"></script>
+<script src="{{ url_for('static', filename='js/ai-dashboard.js') }}"></script>
+{% endblock %}

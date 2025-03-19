@@ -32,6 +32,7 @@
               <li><a href="{{ url_for('settings') }}">Settings</a></li>
               {% if is_admin %}
               <li><a href="{{ url_for('admin_dashboard') }}">Admin</a></li>
+              <li><a href="{{ url_for('ai_dashboard') }}">AI Dashboard</a></li>
               {% endif %}
               <li><a href="{{ url_for('logout') }}">Logout</a></li>
               {% else %}

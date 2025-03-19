@@ -10,6 +10,7 @@ class AdaptationEngine:
     """
     Manages the adaptation of the learning experience based on user performance and preferences.
     Responsible for content recommendation, difficulty adjustment, and learning path optimization.
+    Uses AI/ML techniques for enhanced personalization.
     """
     
     def __init__(self):
@@ -24,9 +25,21 @@ class AdaptationEngine:
     
     def get_recommendations(self, user_id):
         """
-        Generate personalized content recommendations for a user.
-        Uses a hybrid approach combining knowledge state, learning path, and collaborative filtering.
+        Generate personalized content recommendations for a user using AI techniques.
         """
+        # First, try to use the AI-powered recommendation system
+        try:
+            from modules.content_recommendation import ContentRecommendation
+            recommender = ContentRecommendation()
+            ai_recommendations = recommender.get_diverse_recommendations(user_id)
+            
+            if ai_recommendations and len(ai_recommendations) >= 3:
+                return ai_recommendations
+        except Exception as e:
+            logger.error(f"Error using AI recommendations: {e}")
+            # Fall back to traditional recommendation method
+        
+        # Original recommendation code as fallback
         conn = self.get_db_connection()
         
         # Get user's knowledge state
@@ -229,6 +242,36 @@ class AdaptationEngine:
         Determine the next content to present based on the user's performance on the current content.
         Updates the user's learning path position.
         """
+        # Try to use ML-enhanced recommendation first
+        try:
+            from modules.predictive_analytics import PredictiveAnalytics
+            predictor = PredictiveAnalytics()
+            
+            # If we have assessment results and they indicate poor performance
+            if assessment_results and not assessment_results.get('mastery_achieved', False):
+                # Get knowledge gaps and provide targeted content
+                from modules.assessment import AssessmentEngine
+                assessment_engine = AssessmentEngine()
+                knowledge_gaps = assessment_engine.get_knowledge_gaps(user_id)
+                
+                if knowledge_gaps:
+                    # Use the content recommendation system to find content for the top gap
+                    from modules.content_recommendation import ContentRecommendation
+                    recommender = ContentRecommendation()
+                    gap_recommendations = recommender.recommend_for_knowledge_gaps(user_id, limit=1)
+                    
+                    if gap_recommendations:
+                        return {
+                            'content_id': gap_recommendations[0]['content_id'],
+                            'title': gap_recommendations[0]['title'],
+                            'description': gap_recommendations[0]['description'],
+                            'recommendation_type': 'knowledge_gap'
+                        }
+        except Exception as e:
+            logger.error(f"Error using ML-enhanced next content selection: {e}")
+            # Fall back to traditional method
+        
+        # Original method as fallback
         conn = self.get_db_connection()
         
         # Get current learning path
@@ -340,6 +383,29 @@ class AdaptationEngine:
         Adjust content difficulty based on the user's mastery level for a knowledge component.
         Returns the optimal difficulty level for new content.
         """
+        # Try to use ML-enhanced difficulty adjustment first
+        try:
+            from modules.predictive_analytics import PredictiveAnalytics
+            predictor = PredictiveAnalytics()
+            
+            # Get performance prediction
+            performance = predictor.predict_performance(user_id)
+            
+            if performance and 'predicted_performance' in performance:
+                # Adjust difficulty based on predicted performance
+                prediction = performance['predicted_performance']
+                
+                if prediction > 0.85:  # Very high predicted performance
+                    return 3  # Challenging
+                elif prediction > 0.7:  # Good predicted performance
+                    return 2  # Moderate
+                else:  # Lower predicted performance
+                    return 1  # Easier
+        except Exception as e:
+            logger.error(f"Error using ML-enhanced difficulty adjustment: {e}")
+            # Fall back to traditional method
+        
+        # Original method as fallback
         conn = self.get_db_connection()
         
         # Get the user's mastery level for this knowledge component
@@ -379,8 +445,43 @@ class AdaptationEngine:
     def detect_disengagement(self, user_id):
         """
         Detect potential user disengagement based on interaction patterns.
+        Uses ML predictions when available.
         Returns a risk assessment and recommended interventions.
         """
+        # Try to use ML-enhanced disengagement detection first
+        try:
+            from modules.predictive_analytics import PredictiveAnalytics
+            predictor = PredictiveAnalytics()
+            
+            # Get disengagement risk prediction
+            risk = predictor.predict_disengagement_risk(user_id)
+            
+            if risk and 'risk_level' in risk:
+                # Get intervention recommendations
+                interventions = predictor.get_intervention_recommendations(user_id)
+                
+                # If we have recommended interventions, return them
+                if interventions:
+                    primary_intervention = interventions[0]
+                    
+                    return {
+                        'disengagement_risk': risk['risk_level'],
+                        'reason': ', '.join([factor['factor'] for factor in risk['contributing_factors']]) 
+                                if 'contributing_factors' in risk and risk['contributing_factors'] else 'ML-detected pattern',
+                        'intervention': primary_intervention['action']
+                    }
+                
+                # Otherwise, return the risk assessment with a generic intervention
+                return {
+                    'disengagement_risk': risk['risk_level'],
+                    'reason': 'ML-detected pattern',
+                    'intervention': f"Personalized {risk['risk_level']} priority intervention recommended"
+                }
+        except Exception as e:
+            logger.error(f"Error using ML-enhanced disengagement detection: {e}")
+            # Fall back to traditional method
+        
+        # Original method as fallback
         conn = self.get_db_connection()
         
         # Get recent interaction data (within the last week)
